@@ -1,0 +1,19 @@
+# pack-refs with: peeled fully-peeled 
+bc09cdf4ab4eb079d1f63fd9dda835f6164aa53c refs/remotes/origin/4.2.X
+6de090c5e735efe891229a34466e9b679bec8f76 refs/remotes/origin/5.1.X
+2487fe946410fb4b428796d2376f7c1b8e344e60 refs/remotes/origin/master
+a25c21fba0287ab6002ec45ebec92e3cc8d54b26 refs/remotes/origin/simp-4.2.X
+d0f11c6256ef087ed2b71147421ef662594df4e8 refs/remotes/origin/simp-5.1.X
+536842ad4d3f51ec7229d8483fd91054e9865f1c refs/tags/4.2.0-0
+8cd735484da6e2a7a9f69fce1996b23670e4b915 refs/tags/4.2.0-1
+5f2f6fb48e74006fb9cb3018624069287f8a526c refs/tags/4.2.0-2
+681d392739c05ffb1b30e4f017346e86be2799d0 refs/tags/4.2.0-Beta2
+5f4c3b00165075354dd3854366a639e878a60743 refs/tags/4.2.0-RC1
+2487fe946410fb4b428796d2376f7c1b8e344e60 refs/tags/4.3.0-0
+9b9a650a8c6370f9b58f6b644807962d43c39310 refs/tags/5.1.0-0
+c16abccfcaa2a2c52e7db9b0491d7bac409f8bf3 refs/tags/5.1.0-1
+2b99b7273a3e4799045f0fd55e63086b499a1a6c refs/tags/5.1.0-2
+fb3ec26f55a2ae5c24fa614de5fd4188af69b718 refs/tags/5.1.0-3
+5836274712ae9422d48dca4b89a3d4a1d6c5cf3c refs/tags/5.1.0-Beta
+3f17f626f58f60305e1bb577b3ddf774982185e6 refs/tags/5.1.0-RC1
+2487fe946410fb4b428796d2376f7c1b8e344e60 refs/tags/5.2.0-0

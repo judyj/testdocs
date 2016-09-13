@@ -1,0 +1,14 @@
+# build reStructuredText documentation
+---
+language: python
+python:
+  - "2.7"
+addons:
+  apt:
+    packages:
+      - python-devel
+install:
+  - pip install -q -r requirements.txt
+script:
+  - sphinx-build -n -t simp_4 -b html -d _build_v4/sphinx_cache docs/ _build_v4/html
+  - sphinx-build -n -t simp_5 -b html -d _build_v5/sphinx_cache docs/ _build_v5/html

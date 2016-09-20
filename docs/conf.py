@@ -36,6 +36,8 @@ changelog_name        = 'Changelog.rst'
 default_changlog_path = os.path.join(basedir, '..', '..', '..',  changelog_name)
 changelog             = os.getenv('SIMP_CHANGELOG_PATH', default_changlog_path)
 
+print("testing: SIMP_GITHUB_BASE SIMP_CHANGELOG_PATH: ", default_github_base+", "+default_changlog_path, file=sys.stderr)
+
 
 os_ver_mapper_name = 'release_mappings.yaml'
 os_ver_mapper = os.path.join(basedir, '..', '..', '..', 'build', os_ver_mapper_name)
@@ -51,6 +53,10 @@ epilog = []
 #
 # The short X.Y version.
 version = '0.0'
+
+#### judy
+simp_version = 'SIMP-VERSION'
+el_version = 'EL-VERSION'
 
 # The full version, including alpha/beta/rc tags.
 release = 'NEED_FULL_SIMP_BUILD_TREE'
@@ -70,6 +76,8 @@ github_version_targets = [
     '4.2.X',
     'master'
 ]
+print("testing 1: version/release: " + version + release, file=sys.stderr)
+print("testing 1: simp_version/el_version: " + simp_version+el_version, file=sys.stderr)
 
 # If we're running on ReadTheDocs, we should go fetch the content from the
 # actual branch that we're using
@@ -78,7 +86,8 @@ if on_rtd:
 
 # This should be fixed once we move back to the master branch for all mainline
 # work.
-if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
+#if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
+if (1 == 1):  # judy - this is the only case that works
     # Attempt to read auto-generated release file. Needs to be run after
     # rake munge:prep
     rel_file = os.path.join(basedir, '..', 'build/rpm_metadata/release')
@@ -119,6 +128,8 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
 
 full_version = "-".join([version, release])
 version_family = re.sub('\.\d$',".X",version)
+print("testing 2: version/release: " + version + release, file=sys.stderr)
+print("testing 2: simp_version/el_version: " + simp_version+el_version, file=sys.stderr)
 
 if on_rtd:
     _insert_target = 1
@@ -129,6 +140,8 @@ else:
 # This is in reverse order so that it's easier to insert
 github_version_targets.insert(_insert_target, version_family)
 github_version_targets.insert(_insert_target,'simp-' + version_family)
+print("testing 3: version/release: " + version + release, file=sys.stderr)
+print("testing 3: simp_version/el_version: " + simp_version+el_version, file=sys.stderr)
 
 # If we have some sort of valid release, shove it on the stack too.
 if release != 'NEED_FULL_SIMP_BUILD_TREE':
@@ -156,6 +169,8 @@ else:
             next
 
 release_mapping_list = ['Release Mapping Entry Not Found for Version ' + full_version]
+print("testing 4: version/release: " + version + release, file=sys.stderr)
+print("testing 4: simp_version/el_version: " + simp_version+el_version, file=sys.stderr)
 
 if os_ver_mapper_content != None:
     os_flavors = None
@@ -194,6 +209,8 @@ epilog.append('.. |simp_version| replace:: %s' % full_version)
 el_version = ".".join([el_major_version, el_minor_version])
 epilog.append('.. |el_version| replace:: %s' % el_version)
 
+print("testing 5: version/release: " + version + release, file=sys.stderr)
+print("testing 5: simp_version/el_version: " + simp_version+el_version, file=sys.stderr)
 def setup(app):
     app.add_config_value('simp_version', full_version, 'env') # The third value must always be 'env'
     app.add_config_value('el_version', el_version, 'env') # The third value must always be 'env'
@@ -208,6 +225,8 @@ Known OS Compatibility
 changelog_urls = []
 for version_target in github_version_targets:
     changelog_urls.append('/'.join([github_base, 'simp-core', version_target, changelog_name]))
+
+print("testing 5: url: " + changelog_urls[-1], file=sys.stderr)
 
 changelog_stub = """
 Changelog Stub

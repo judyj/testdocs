@@ -107,12 +107,12 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                 for line in os_simp_spec_content:
                     _tmp = line.split()
                     if 'Version:' in _tmp:
-                        print ""Version "+_tmp[-1], file=sys.stderr)
+                        print ("version "+_tmp[-1], file=sys.stderr)
                         version_list = _tmp[-1].split('.')
                         version = '.'.join(version_list[0:2]).strip()
                         version = re.sub('%\{.*?\}', '', version)
                     elif 'Release:' in _tmp:
-                        print "release "+_tmp[-1], file=sys.stderr)
+                        print ("release "+_tmp[-1], file=sys.stderr)
                         release = _tmp[-1].strip()
                         release = re.sub('%\{.*?\}', '', release)
                 break

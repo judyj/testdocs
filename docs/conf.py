@@ -111,6 +111,7 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                         version_list = _tmp[-1].split('.')
                         version = '.'.join(version_list[0:3]).strip()
                         version = re.sub('%\{.*?\}', '', version)
+                        print ("version "+_tmp[-1], file=sys.stderr)
                     elif 'Release:' in _tmp:
                         print ("release "+_tmp[-1], file=sys.stderr)
                         release = _tmp[-1].strip()
@@ -120,6 +121,7 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                 next
 
 full_version = "-".join([version, release])
+print ("version "+full_version, file=sys.stderr)
 version_family = re.sub('\.\d$',".X",version)
 
 if on_rtd:

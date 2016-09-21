@@ -109,7 +109,7 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                     if 'Version:' in _tmp:
                         print ("version "+_tmp[-1], file=sys.stderr)
                         version_list = _tmp[-1].split('.')
-                        version = '.'.join(version_list).strip()
+                        version = '.'.join(version_list[0:3]).strip()
                         version = re.sub('%\{.*?\}', '', version)
                     elif 'Release:' in _tmp:
                         print ("release "+_tmp[-1], file=sys.stderr)

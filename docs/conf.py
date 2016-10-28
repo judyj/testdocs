@@ -124,7 +124,7 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.en
         # end for simp_spec_urls
 # end if (not on_rtd) or (os.environ.get('R...
 print("version/release = "+version+'-'+release,file=sys.stderr)
-if (version != 'VERSION') and (release == 'MAPPING'):
+if (version != 'VERSION') and (el_major_version == 'UNKNOWN'):
     release = ' latest'
 # end (we found version bu no release) 
 full_version = "-".join([version, release])

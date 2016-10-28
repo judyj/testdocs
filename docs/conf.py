@@ -35,7 +35,16 @@ github_base = os.getenv('SIMP_GITHUB_BASE', default_github_base)
 changelog_name        = 'Changelog.rst'
 default_changlog_path = os.path.join(basedir, '..', '..', '..',  changelog_name)
 changelog             = os.getenv('SIMP_CHANGELOG_PATH', default_changlog_path)
+if on_rtd:
+    rtd_ver               = os.environ.get('READTHEDOCS_VERSION')
+else:
+    rtd_ver               = 'None'
 
+# get env variables
+print("INFO: SIMP_GITHUB_BASE "+default_github_base, file=sys.stderr)
+print("INFO: SIMP_CHANGELOG_PATH "+default_changlog_path, file=sys.stderr)
+print("INFO: READTHEDOCS_VERSION "+rtd_ver, file=sys.stderr)
+ 
 
 os_ver_mapper_name = 'release_mappings.yaml'
 os_ver_mapper = os.path.join(basedir, '..', '..', '..', 'build', os_ver_mapper_name)
@@ -123,10 +132,10 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.en
             # end try 
         # end for simp_spec_urls
 # end if (not on_rtd) or (os.environ.get('R...
-print("version/release = "+version+'-'+release+"maj/minor ver "+el_major_version+'-'+el_minor_version,file=sys.stderr)
-if (version != 'VERSION') and (el_major_version == 'UNKNOWN'):
-    release = ' latest'
-print("version/release = "+version+'-'+release,file=sys.stderr)
+print("version/release = "+version+'-'+release+", maj/minor ver "+el_major_version+'-'+el_minor_version,file=sys.stderr)
+# if (el_minor_version == 'MAPPING') and (el_major_version == 'UNKNOWN'):
+#     release = ' latest'
+# print("version/release = "+version+'-'+release,file=sys.stderr)
 # end (we found version but no release) 
 full_version = "-".join([version, release])
 version_family = re.sub('\.\d$',".X",version)

@@ -78,7 +78,7 @@ if on_rtd:
 
 # This should be fixed once we move back to the master branch for all mainline
 # work.
-if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
+if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.environ.get('READTHEDOCS_VERSION') == 'latest') or (os.environ.get('READTHEDOCS_VERSION') == 'stable'):
     # Attempt to read auto-generated release file. Needs to be run after
     # rake munge:prep
     rel_file = os.path.join(basedir, '..', 'build/rpm_metadata/release')
@@ -95,10 +95,13 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
     else:
         os_simp_spec_urls = []
         for version_target in github_version_targets:
+            print("INFO: version_target: "+version_target , file=sys.stderr)
             os_simp_spec_urls.append('/'.join([github_base, 'simp-core', version_target, 'src', 'build', 'simp.spec']))
 
         # Grab it from the Internet!
         for os_simp_spec_url in os_simp_spec_urls:
+            print("INFO: simp_spec_urls: " , file=sys.stderr)
+            print(os_simp_spec_url, file=sys.stderr)
             try:
                 print("NOTICE: Downloading SIMP Spec File: " + os_simp_spec_url, file=sys.stderr)
                 os_simp_spec_content = urllib2.urlopen(os_simp_spec_url).read().splitlines()
@@ -107,27 +110,31 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                 for line in os_simp_spec_content:
                     _tmp = line.split()
                     if 'Version:' in _tmp:
-                        print ("version "+_tmp[-1], file=sys.stderr)
                         version_list = _tmp[-1].split('.')
                         version = '.'.join(version_list[0:3]).strip()
                         version = re.sub('%\{.*?\}', '', version)
-                        print ("version "+_tmp[-1], file=sys.stderr)
                     elif 'Release:' in _tmp:
-                        print ("release "+_tmp[-1], file=sys.stderr)
                         release = _tmp[-1].strip()
                         release = re.sub('%\{.*?\}', '', release)
+                    # end if version or release in
                 break
             except urllib2.URLError:
                 next
-
+            # end try 
+        # end for simp_spec_urls
+# end if (not on_rtd) or (os.environ.get('R...
+print("version/release = "+version+'-'+release,file=sys.stderr)
+if (version != 'VERSION') and (release == 'MAPPING'):
+    release = ' latest'
+# end (we found version bu no release) 
 full_version = "-".join([version, release])
-print ("version "+full_version, file=sys.stderr)
 version_family = re.sub('\.\d$',".X",version)
 
 if on_rtd:
     _insert_target = 1
 else:
     _insert_target = 0
+# if on_rtd
 
 # Update the github list with the rest of our 'best guess' content
 # This is in reverse order so that it's easier to insert
@@ -145,6 +152,7 @@ else:
     os_ver_mapper_urls = []
     for version_target in github_version_targets:
         os_ver_mapper_urls.append('/'.join([github_base, 'simp-core', version_target, 'build', os_ver_mapper_name]))
+    # end for loop
 
     # Grab it from the Internet!
     for os_ver_mapper_url in os_ver_mapper_urls:
@@ -158,10 +166,14 @@ else:
             break
         except urllib2.URLError:
             next
-
+        # end try
+    # end for ver_mapper_urls (when no version mapper)
+# end if os_ver_mapper is file
 release_mapping_list = ['Release Mapping Entry Not Found for Version ' + full_version]
 
 if os_ver_mapper_content != None:
+    print("NOTICE: os_ver_mapper_content not none ", file=sys.stderr)
+    print("NOTICE: version "+version, file=sys.stderr)
     os_flavors = None
     ver_map = yaml.load(os_ver_mapper_content)
     if version in ver_map['simp_releases']:
@@ -170,9 +182,16 @@ if os_ver_mapper_content != None:
         os_flavors = ver_map['simp_releases'][full_version]['flavors']
     elif version_family in ver_map['simp_releases']:
         os_flavors = ver_map['simp_releases'][version_family]['flavors']
+    # end - looking for version (do we need another else here?)
 
     # Extract the actual OS version supported for placement in the docs
+    print("INFO: os_flavors", file=sys.stderr)
+    print(os_flavors, file=sys.stderr)
     if os_flavors is not None:
+        print("NOTICE: os_flavors not none ", file=sys.stderr)
+        print("NOTICE: Version "+os_version, file=sys.stderr)
+        print("NOTICE: os_flavors RedHat "+os_flavors['RedHat']['os_version'], file=sys.stderr)
+        print("NOTICE: os_flavors CentOS "+os_flavors['CentOS']['os_version'], file=sys.stderr)
         if os_flavors['RedHat']:
             ver_list = os_flavors['RedHat']['os_version'].split('.')
             el_major_version = ver_list[0]
@@ -189,9 +208,13 @@ if os_ver_mapper_content != None:
             for i, iso in enumerate(os_flavors[os_flavor]['isos']):
                 release_mapping_list.append("\n   * **ISO #" + str(i+1) + ":** " + iso['name'])
                 release_mapping_list.append("   * **Checksum:** " + iso['checksum'])
+            # end for loop for iso flavors
+        # end for loop for flavors
 
         # Trailing newline
         release_mapping_list.append('')
+     # end if os_flavors is not None (do we need else?)
+# end if os_version_mapper_content is not none
 
 epilog.append('.. |simp_version| replace:: %s' % full_version)
 
@@ -384,7 +407,7 @@ html_context = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "%s %s.%s documentation" % (project, version, release )
+html_title = "%s %s-%s documentation" % (project, version, release )
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None

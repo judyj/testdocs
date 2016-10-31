@@ -24,6 +24,7 @@ import textwrap
 import re
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
+os_version = 'None'
 
 # Pre-Build Manipulation Code
 
@@ -39,12 +40,12 @@ if on_rtd:
     rtd_ver               = os.environ.get('READTHEDOCS_VERSION')
 else:
     rtd_ver               = 'None'
+#end if on_rtd
 
 # get env variables
 print("INFO: SIMP_GITHUB_BASE "+default_github_base, file=sys.stderr)
 print("INFO: SIMP_CHANGELOG_PATH "+default_changlog_path, file=sys.stderr)
 print("INFO: READTHEDOCS_VERSION "+rtd_ver, file=sys.stderr)
- 
 
 os_ver_mapper_name = 'release_mappings.yaml'
 os_ver_mapper = os.path.join(basedir, '..', '..', '..', 'build', os_ver_mapper_name)
@@ -64,8 +65,8 @@ version = '0.0'
 # The full version, including alpha/beta/rc tags.
 release = 'NEED_FULL_SIMP_BUILD_TREE'
 
-el_major_version = 'UNKNOWN'
-el_minor_version = 'MAPPING'
+el_major_version = 'unknown'
+el_minor_version = 'version'
 
 # Grab the version information out of all of the surrounding infrastructure
 # files if they exist.
@@ -87,7 +88,8 @@ if on_rtd:
 
 # This should be fixed once we move back to the master branch for all mainline
 # work.
-if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.environ.get('READTHEDOCS_VERSION') == 'latest') or (os.environ.get('READTHEDOCS_VERSION') == 'stable'):
+#if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.environ.get('READTHEDOCS_VERSION') == 'latest') or (os.environ.get('READTHEDOCS_VERSION') == 'stable'):
+if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
     # Attempt to read auto-generated release file. Needs to be run after
     # rake munge:prep
     rel_file = os.path.join(basedir, '..', 'build/rpm_metadata/release')
@@ -133,10 +135,6 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.en
         # end for simp_spec_urls
 # end if (not on_rtd) or (os.environ.get('R...
 print("version/release = "+version+'-'+release+", maj/minor ver "+el_major_version+'-'+el_minor_version,file=sys.stderr)
-# if (el_minor_version == 'MAPPING') and (el_major_version == 'UNKNOWN'):
-#     release = ' latest'
-# print("version/release = "+version+'-'+release,file=sys.stderr)
-# end (we found version but no release) 
 full_version = "-".join([version, release])
 version_family = re.sub('\.\d$',".X",version)
 
@@ -199,9 +197,12 @@ if os_ver_mapper_content != None:
     print(os_flavors, file=sys.stderr)
     if os_flavors is not None:
         print("NOTICE: os_flavors not none ", file=sys.stderr)
+        print(os_flavors, file=sys.stderr)
         print("NOTICE: Version "+os_version, file=sys.stderr)
-        print("NOTICE: os_flavors RedHat "+os_flavors['RedHat']['os_version'], file=sys.stderr)
-        print("NOTICE: os_flavors CentOS "+os_flavors['CentOS']['os_version'], file=sys.stderr)
+        if os_version != None:
+           print("NOTICE: os_flavors RedHat "+os_flavors['RedHat']['os_version'], file=sys.stderr)
+           print("NOTICE: os_flavors CentOS "+os_flavors['CentOS']['os_version'], file=sys.stderr)
+        # end if
         if os_flavors['RedHat']:
             ver_list = os_flavors['RedHat']['os_version'].split('.')
             el_major_version = ver_list[0]

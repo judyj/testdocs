@@ -24,7 +24,7 @@ import textwrap
 import re
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
-print("NOTICE: READTHEDOCS_VERSION: " + READTHEDOCS_VERSION, file=sys.stderr)
+print("NOTICE: READTHEDOCS_VERSION: " + os.environ.get('READTHEDOCS_VERSION'), file=sys.stderr)
 
 
 # Pre-Build Manipulation Code

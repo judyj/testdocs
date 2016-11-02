@@ -24,7 +24,8 @@ import textwrap
 import re
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
-os_version = 'None'
+print("NOTICE: READTHEDOCS_VERSION: " + os.environ.get('READTHEDOCS_VERSION'), file=sys.stderr)
+
 
 # Pre-Build Manipulation Code
 
@@ -36,16 +37,7 @@ github_base = os.getenv('SIMP_GITHUB_BASE', default_github_base)
 changelog_name        = 'Changelog.rst'
 default_changlog_path = os.path.join(basedir, '..', '..', '..',  changelog_name)
 changelog             = os.getenv('SIMP_CHANGELOG_PATH', default_changlog_path)
-if on_rtd:
-    rtd_ver               = os.environ.get('READTHEDOCS_VERSION')
-else:
-    rtd_ver               = 'None'
-#end if on_rtd
 
-# get env variables
-print("INFO: SIMP_GITHUB_BASE "+default_github_base, file=sys.stderr)
-print("INFO: SIMP_CHANGELOG_PATH "+default_changlog_path, file=sys.stderr)
-print("INFO: READTHEDOCS_VERSION "+rtd_ver, file=sys.stderr)
 
 os_ver_mapper_name = 'release_mappings.yaml'
 os_ver_mapper = os.path.join(basedir, '..', '..', '..', 'build', os_ver_mapper_name)
@@ -65,8 +57,8 @@ version = '0.0'
 # The full version, including alpha/beta/rc tags.
 release = 'NEED_FULL_SIMP_BUILD_TREE'
 
-el_major_version = 'unknown'
-el_minor_version = 'version'
+el_major_version = 'UNKNOWN'
+el_minor_version = 'MAPPING'
 
 # Grab the version information out of all of the surrounding infrastructure
 # files if they exist.
@@ -88,7 +80,6 @@ if on_rtd:
 
 # This should be fixed once we move back to the master branch for all mainline
 # work.
-#if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master') or (os.environ.get('READTHEDOCS_VERSION') == 'latest') or (os.environ.get('READTHEDOCS_VERSION') == 'stable'):
 if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
     # Attempt to read auto-generated release file. Needs to be run after
     # rake munge:prep
@@ -106,13 +97,10 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
     else:
         os_simp_spec_urls = []
         for version_target in github_version_targets:
-            print("INFO: version_target: "+version_target , file=sys.stderr)
             os_simp_spec_urls.append('/'.join([github_base, 'simp-core', version_target, 'src', 'build', 'simp.spec']))
 
         # Grab it from the Internet!
         for os_simp_spec_url in os_simp_spec_urls:
-            print("INFO: simp_spec_urls: " , file=sys.stderr)
-            print(os_simp_spec_url, file=sys.stderr)
             try:
                 print("NOTICE: Downloading SIMP Spec File: " + os_simp_spec_url, file=sys.stderr)
                 os_simp_spec_content = urllib2.urlopen(os_simp_spec_url).read().splitlines()
@@ -127,14 +115,10 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                     elif 'Release:' in _tmp:
                         release = _tmp[-1].strip()
                         release = re.sub('%\{.*?\}', '', release)
-                    # end if version or release in
                 break
             except urllib2.URLError:
                 next
-            # end try 
-        # end for simp_spec_urls
-# end if (not on_rtd) or (os.environ.get('R...
-print("version/release = "+version+'-'+release+", maj/minor ver "+el_major_version+'-'+el_minor_version,file=sys.stderr)
+
 full_version = "-".join([version, release])
 version_family = re.sub('\.\d$',".X",version)
 
@@ -142,7 +126,6 @@ if on_rtd:
     _insert_target = 1
 else:
     _insert_target = 0
-# if on_rtd
 
 # Update the github list with the rest of our 'best guess' content
 # This is in reverse order so that it's easier to insert
@@ -160,7 +143,6 @@ else:
     os_ver_mapper_urls = []
     for version_target in github_version_targets:
         os_ver_mapper_urls.append('/'.join([github_base, 'simp-core', version_target, 'build', os_ver_mapper_name]))
-    # end for loop
 
     # Grab it from the Internet!
     for os_ver_mapper_url in os_ver_mapper_urls:
@@ -174,14 +156,10 @@ else:
             break
         except urllib2.URLError:
             next
-        # end try
-    # end for ver_mapper_urls (when no version mapper)
-# end if os_ver_mapper is file
+
 release_mapping_list = ['Release Mapping Entry Not Found for Version ' + full_version]
 
 if os_ver_mapper_content != None:
-    print("NOTICE: os_ver_mapper_content not none ", file=sys.stderr)
-    print("NOTICE: version "+version, file=sys.stderr)
     os_flavors = None
     ver_map = yaml.load(os_ver_mapper_content)
     if version in ver_map['simp_releases']:
@@ -190,19 +168,9 @@ if os_ver_mapper_content != None:
         os_flavors = ver_map['simp_releases'][full_version]['flavors']
     elif version_family in ver_map['simp_releases']:
         os_flavors = ver_map['simp_releases'][version_family]['flavors']
-    # end - looking for version (do we need another else here?)
 
     # Extract the actual OS version supported for placement in the docs
-    print("INFO: os_flavors", file=sys.stderr)
-    print(os_flavors, file=sys.stderr)
     if os_flavors is not None:
-        print("NOTICE: os_flavors not none ", file=sys.stderr)
-        print(os_flavors, file=sys.stderr)
-        print("NOTICE: Version "+os_version, file=sys.stderr)
-        if os_version != None:
-           print("NOTICE: os_flavors RedHat "+os_flavors['RedHat']['os_version'], file=sys.stderr)
-           print("NOTICE: os_flavors CentOS "+os_flavors['CentOS']['os_version'], file=sys.stderr)
-        # end if
         if os_flavors['RedHat']:
             ver_list = os_flavors['RedHat']['os_version'].split('.')
             el_major_version = ver_list[0]
@@ -219,13 +187,9 @@ if os_ver_mapper_content != None:
             for i, iso in enumerate(os_flavors[os_flavor]['isos']):
                 release_mapping_list.append("\n   * **ISO #" + str(i+1) + ":** " + iso['name'])
                 release_mapping_list.append("   * **Checksum:** " + iso['checksum'])
-            # end for loop for iso flavors
-        # end for loop for flavors
 
         # Trailing newline
         release_mapping_list.append('')
-     # end if os_flavors is not None (do we need else?)
-# end if os_version_mapper_content is not none
 
 epilog.append('.. |simp_version| replace:: %s' % full_version)
 
@@ -239,7 +203,6 @@ def setup(app):
 known_os_compat_content = """
 Known OS Compatibility
 ----------------------
-
 {0}
 """.format("\n".join(release_mapping_list))
 
@@ -250,13 +213,10 @@ for version_target in github_version_targets:
 changelog_stub = """
 Changelog Stub
 ==============
-
 .. warning::
     The build scripts could not find a valid Changelog either locally or on the Internet!
-
 .. note::
     Please check your Internet connectivity as well as your local build system.
-
 Attempted Locations:
 {0}
 """.format("\n".join(["  * %s" % x for x in [changelog] + changelog_urls]))

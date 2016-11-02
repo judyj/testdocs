@@ -110,8 +110,11 @@ if (not on_rtd) or (os.environ.get('READTHEDOCS_VERSION') == 'master'):
                     _tmp = line.split()
                     if 'Version:' in _tmp:
                         version_list = _tmp[-1].split('.')
+                        print("NOTICE: version_list: " + version_list, file=sys.stderr)
                         version = '.'.join(version_list[0:3]).strip()
+                        print("NOTICE: version: " + version, file=sys.stderr)
                         version = re.sub('%\{.*?\}', '', version)
+                        print("NOTICE: version: " + version, file=sys.stderr)
                     elif 'Release:' in _tmp:
                         release = _tmp[-1].strip()
                         release = re.sub('%\{.*?\}', '', release)

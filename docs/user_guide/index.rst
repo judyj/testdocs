@@ -9,18 +9,11 @@ Contents:
   :maxdepth: 2
 
   Introduction
+  Initial_Server_Configuration
   Client_Management
-  Maximum_Nodes
   SIMP_Administration
   User_Management
-  Hiera_Overview
+  Upgrade_SIMP
   Troubleshooting
   HOWTO
-  FAQ
   SIMP_Package_Data
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`search`

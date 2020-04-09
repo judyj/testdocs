@@ -41,7 +41,7 @@ logged to via ``syslog``.
 [:ref:`CM-3a.`, :ref:`CM-3 (3)`]
 
 Linux systems are made up of hundreds of configuration files that can contain
-numerous of settings. SIMP does not make an attempt to manage all of the
+numerous settings. SIMP does not make an attempt to manage all of the
 settings in every file. Instead, critical operating system files or files that
 need to be controlled centrally are managed. Implementations can manage
 additional files if they are deemed necessary.
@@ -70,11 +70,6 @@ clients. One or all of the following can help automate flaw remediation
      running a YUM update manually, or allowing time for the cron job to run,
      will ensure packages on all clients are updated.  Otherwise, a cron job
      will perform a daily update of packages with YUM.
-
-*  **MCollective:**
-
-   * Allow users to execute **specific** commands across large numbers of nodes
-     in an auditable, distributed, and scalable, fashion.
 
 The extent of security verification that is performed currently is based on
 changes to files that Puppet or the Advanced Intrusion Detection Environment
@@ -140,9 +135,6 @@ help provide security functionality such as dynamic reconfigurations and
 wide-scale consistent mitigation application. If an implementation chooses,
 they can leverage Puppet's ability to reconfigure systems as part of incident
 response.
-
-SIMP also delivers an MCollective infrastructure which can be used to rapidly
-query for system state or apply hotfixes in a scalable manner.
 [:ref:`IR-1`]
 
 Contingency Planning
@@ -152,10 +144,16 @@ SIMP does not provide any direct support for contingency planning. Some of the
 mechanisms provided by SIMP might be used to support an implementation's
 contingency plan.
 
-System Backup
--------------
+System Backup and Recovery
+--------------------------
 
-SIMP comes with a module called ``backuppc``. This module provides a base
-configuration of the `BackupPC <http://backuppc.sourceforge.net/>`__ software
-and allows Puppet servers and clients to perform backups.
-[:ref:`CP-10 (6)`]
+SIMP does not directly support any particular backup and recovery
+product.  Solutions vary widely, and should be determined as part of an
+implementation's broader contingency plan. SIMP provides mechanisms that might
+be used to support backup and recovery procedures.
+
+Administrators seeking FOSS software to implement backup and recovery solutions
+may be interested in products such as `Bacula <https://www.bacula.org/>`__,
+`BackupPC <http://backuppc.sourceforge.net/>`__, `duplicity
+<http://duplicity.nongnu.org/>`__, and `scat
+<https://github.com/Roman2K/scat>`__.

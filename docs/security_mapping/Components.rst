@@ -1,12 +1,12 @@
 SIMP Components
 ================
 
-This section contains the security documentation for  SIMP modules (represented as components).
+This section contains the security documentation for  SIMP modules (represented
+as components).
 
 .. toctree::
   :maxdepth: 1
-  
-  components/simplib/simplib.rst
+
   components/simp/simp.rst
   components/aide/aide.rst
   components/apache/apache.rst
@@ -22,5 +22,5 @@ This section contains the security documentation for  SIMP modules (represented 
   components/ssh/ssh.rst
   components/stunnel/stunnel.rst
   components/sudo/sudo.rst
-  components/sudosh/sudosh.rst
+  components/tlog/tlog.rst
   components/tcpwrappers/tcpwrappers.rst

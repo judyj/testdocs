@@ -1,29 +1,43 @@
+.. _howto-guides:
+
 SIMP HOWTO Guides
 =================
 
-This chapter provides guidance on configuration various common capabilities in
+This chapter provides guidance on configuration of various common capabilities in
 the SIMP system.
+
+The order is loosely based on the number of times a given question is asked
+with more commonly sought items towards the top.
 
 .. toctree::
   :maxdepth: 1
 
-  Setup Central Log Collection <HOWTO/Central_Log_Collection>
-  Change Puppet Masters <HOWTO/Changing_Puppet_Masters>
-  Disable dhcpd <HOWTO/Disable_dhcpd>
-  Disable named <HOWTO/Disable_named>
-  Discard Mail to Root <HOWTO/Discard_Mail_to_Root>
-  Build a bootable SIMP DVD <HOWTO/DVD_Build>
-  Exclude YUM Repositories <HOWTO/Exclude_Repositories>
-  Enable The Foreman <HOWTO/Foreman>
-  Configure NFS <HOWTO/NFS>
-  Configure IPTables NAT Rules <HOWTO/IPTables_NAT_Rules>
-  Enable Kerberos <HOWTO/Kerberos>
-  Manage Workstation Infrastructures <HOWTO/Managing_Workstation_Infrastructures>
-  Kickstart the Initial Server <HOWTO/Network_Build>
-  Perform One-shot Operations <HOWTO/Performing_One_Shot_Operations>
-  Backup the Puppet Master <HOWTO/Puppetmaster_Backup>
-  Configure a Puppet Server Behind a NAT <HOWTO/Puppet_Server_NAT>
-  Enable Redundent LDAP <HOWTO/Redundant_LDAP>
+  Configure SIMP for Compliance Enforcement <HOWTO/Compliance_Enforcement>
+  Enable STIG Mode <HOWTO/Enable_STIG_Mode>
+  Customize settings for SSH <HOWTO/Configure_Ssh>
+  Set up SSH Authorized Keys <HOWTO/SSH_Keys>
+  Disable SSH Management <HOWTO/Disable_Ssh>
+  Restrict SSH Network Access <HOWTO/SSH_Restrict_Network_Access.rst>
   Enable SFTP Restricted Accounts <HOWTO/SFTP_Restricted_Accounts>
-  Setup SSH Authorized Keys <HOWTO/SSH_Keys>
-  Upgrade SIMP <HOWTO/Upgrading_SIMP>
+  Modify the Nightly Package Update Schedule <HOWTO/Control_Nightly_Update_Schedule>
+  Modify the Puppet Cron Schedule <HOWTO/Modify_Puppet_Cron>
+  Work with the SIMP Rsync Shares <HOWTO/Work_With_Rsync>
+  Set up Central Log Collection with Rsyslog <HOWTO/Central_Log_Collection_with_Rsyslog>
+  Change Puppet Masters <HOWTO/Changing_Puppet_Masters>
+  Discard Mail to Root <HOWTO/Discard_Mail_to_Root>
+  Exclude YUM Repositories from Nightly Updates <HOWTO/Exclude_Repositories>
+  Configure NFS <HOWTO/NFS>
+  Configure SNMPD <HOWTO/SNMPD>
+  Enable Kerberos <HOWTO/Kerberos>
+  Set up a Control Repo for a SIMP Environment <HOWTO/Control_Repo>
+  Set up SIMP's ENC for Setting a Node's Environment <HOWTO/ENC_setup>
+  Generate a Puppetfile <HOWTO/Generate_SIMP_Puppetfile>
+  Manage Workstation Infrastructures <HOWTO/Managing_Workstation_Infrastructures>
+  Backup the Puppet Master <HOWTO/Puppetmaster_Backup>
+  Disconnect PuppetDB from the Puppet Server <HOWTO/Disconnect_PuppetDB_from_Puppet_Server>
+  Enable Redundent LDAP <HOWTO/Redundant_LDAP>
+  Enroll hosts in an IPA domain <HOWTO/IPA_Clients>
+  Manage TPM <HOWTO/Manage_TPM>
+  Set up and Utilize Bolt <HOWTO/Bolt>
+  Block or Cache Facts<HOWTO/Block_or_Cache_Facts>
+  Upgrade SIMP <HOWTO/Upgrade_SIMP>

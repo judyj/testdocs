@@ -16,11 +16,10 @@ User Identification and Authentication
 Identification and authentication of system and service users can occur at
 either the :term:`Operating System` level or globally in the SIMP architecture.
 While local accounts and groups can be created manually, the SIMP team suggests
-adding users via the ``/etc/puppet/localusers`` file or by using the native
-Puppet user and group types. System users can authenticate their access using
-Secure Shell (SSH) keys or passwords. For more centralized control, identify
-and authenticate users by using the Lightweight Directory Access Protocol
-(:term:`LDAP`).
+adding users using the native Puppet user and group types. System users can
+authenticate their access using Secure Shell (SSH) keys or passwords. For more
+centralized control, identify and authenticate users by using the Lightweight
+Directory Access Protocol (:term:`LDAP`).
 [:ref:`IA-2`]
 
 The SIMP team recommends using :term:`LDAP` as the primary source for user
@@ -143,8 +142,9 @@ have several default settings including:
 *  Assignment of users into groups locally or centrally via LDAP. [:ref:`AC-2 (7)`]
 
    * By default, SIMP will have an administrators groups that has the ability
-     to run ``sudosh``. Implementations should further define administrators or
-     user groups and limit them with the Puppet ``sudo`` class.
+     to run ``sudo su - root``. Implementations should further define
+     administrators or user groups and limit them with the Puppet ``sudo``
+     class.
 
 Access Enforcement
 ------------------
@@ -188,7 +188,7 @@ Application Direction Protocol   Transport Ports   Comment
 =========== ========= ========== ========= ======= =======================================================================
 Puppet      Localhost HTTP       TCP       8140    The port upon which the Puppet master listens for client connections via Apache
 Puppet CA   In        HTTPS      TCP       8141    This is used to ensure that Apache can verify all certificates from external systems properly prior to allowing access to Puppet.
-Apache/YUM  In        HTTP       TCP       80      This is used for YUM and is unencrypted, since YUM will not work otherwise.
+Apache/YUM  In        HTTP       TCP       443     This is used for YUM and is encrypted using https.
 DHCPD       In        DHCP/BOOTP TCP/UDP   546,547 DHCP pooling is disabled by default and should only be used if the implementation requires the use of this protocol.
 TFTP        In        TFTP       TCP/UDP   69      This is used for kickstart. It could also be used to update network devices. TFTP does not support encryption.
 rsyslog     Out       syslog     TCP/UDP   6514    This is encrypted when communicating with a SIMP syslog server (not installed by default).
@@ -232,7 +232,7 @@ Least Privilege
 SIMP does not allow ``root`` to directly :term:`SSH` into a system. Direct
 access to the ``root`` user must occur via a console (or at a virtual instance
 of the physical console) to log on. Otherwise, users must log on as themselves
-and perform privileged commands using ``sudo`` or ``sudosh``.
+and perform privileged commands using ``sudo``.
 [:ref:`AC-6`]
 
 :term:`NIST 800-53` least privilege security controls give people access to
@@ -306,7 +306,7 @@ OpenSSH software. OpenSSH provides both confidentiality and integrity of remote
 access sessions. The SSH :term:`IPTables` rules allow connections from any
 host. SSH relies on other Linux mechanisms to provide identification and
 authentication of a user.  As discussed in the auditing section, user actions
-are audited with the audit daemon (``auditd``) and :term:`sudosh`.
+are audited with the audit daemon (``auditd``) and :term:`Tlog`.
 [:ref:`AC-17`]
 
 Systems and Communications Protection
@@ -329,7 +329,7 @@ performing non-administrative activities. In both cases, general users with
 accounts on an individual host are allowed access to the host using the
 ``pam::access`` module, so long as they have an account on the target host. No
 user may perform or have access to administrative functions unless given
-``sudo`` or :term:`sudosh` privileges via Puppet.
+``sudo`` privileges via Puppet.
 
 Shared Resources
 ----------------
@@ -394,7 +394,7 @@ The *Fake CA* certificates should be replaced with your own hardware-generated
 certificates if at all possible. The *Puppet CA* may be replaced but please
 understand all ramifications to the infrastructure before doing so.
 
-More information on the Puppet CA can be found in the Puppet Labs `security documentation <http://projects.puppetlabs.com/projects/1/wiki/certificates_and_security>`__.
+More information on the Puppet CA can be found in the Puppet Labs `security documentation <https://docs.puppet.com/background/ssl/index.html>`__.
 [:ref:`SC-17`, :ref:`SC-13`]
 
 .. WARNING::
@@ -446,9 +446,9 @@ and applied if deemed applicable.
 
 Privileged commands are audited as part of the SIMP auditing configuration.
 This is accomplished by monitoring ``sudo`` commands with ``auditd``.
-Session interaction for administrators that use :term:`sudosh` are also logged.
-Each ``sudosh`` session can be reviewed using ``sudosh-replay`` and are also
-sent to ``rsyslog``.
+The output of session interaction for administrative login shells is also
+collected using :term:`Tlog`. :term:`Tlog` session recordings are sent to
+:term:`Syslog` for further processing.
 [:ref:`AU-2 (4)`]
 
 Content of Audit Records
@@ -494,15 +494,6 @@ operate.  Several security guides have suggested that the system should shut
 down if ``auditd`` fails for any reason. To prevent operational issues, SIMP
 will not shut down, but will provide an alert via ``syslog`` when this happens.
 [:ref:`AU-5 (1)`]
-
-SIMP also comes with an optional module for the Elasticsearch/Logstash/Grafana
-(ELG) stack. These three open source tools can be combined to parse, index, and
-visualize logs. There are also SIMP provided dashboards for the Kibana web
-interface. Implementations can build their own dashboards to meet local
-security or functional needs for log reduction and management.
-[:ref:`AU-6`]
-
-See :ref:`Elasticsearch, Logstash, and Grafana` for more information.
 
 Protection of Audit Information
 -------------------------------

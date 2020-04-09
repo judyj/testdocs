@@ -1,15 +1,30 @@
 #!/usr/bin/rake -T
 
+ENV['SIMP_INTERNAL_pkg_ignore'] = 'build/rpm_metadata'
+
+require 'ostruct'
+require 'rake/clean'
 require 'simp/rake'
 require 'yaml'
 require 'find'
 
+CLEAN.include 'build/rpm_metadata'
+CLEAN.include 'linkcheck'
+
 desc 'Munge Prep'
   desc <<-EOM
-This task munges the local working directory and Github
-to determine what version and release of the docs should be built.
-The version and release are written to build/rpm_metadata/release.
-If no defaults can be found, the version defaults to 5.1.X-X.
+This task extracts the docs version and release from a simp.spec file
+and then writes these values into a local build/rpm_metadata/release
+file. The simp.spec file to use is determined as follows:
+1) First look for a simp.spec file within a local simp-core git repo.
+   The location of that repo can be specified by SIMP_CORE_PATH.
+   Otherwise it defaults to '../..', the location suitable when
+   simp-docs are checkout out as part of a simp-core ISO build.
+2) If a local simp.spec file cannot be found and the SIMP_BRANCH
+   environment variable is specified, pull the simp.spec file
+   from github for that simp-core branch.
+3) Otherwise, pull the simp.spec file from github for the simp-core
+   master branch.
 EOM
 task 'munge:prep' do
   # Defaults
@@ -18,13 +33,27 @@ task 'munge:prep' do
   # by lua simp-doc.spec
   rel_file = './build/rpm_metadata/release'
   #
-  # Location of the simp spec file, which is referenced
-  # for default version and release.
-  specfile = '../../src/build/simp.spec'
+  # Location of the local simp spec file
+  if ENV['SIMP_CORE_PATH']
+    local_simp_core_path = File.expand_path(ENV['SIMP_CORE_PATH'])
+  else
+    local_simp_core_path = File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
+  end
+  specfile = File.join(local_simp_core_path, 'src', 'assets', 'simp', 'build', 'simp.spec')
+  if File.exist?(specfile)
+    # Tell python code where simp-core is during the RPM build process.
+    # In the RPM build, it builds the source RPM and then installs it
+    # in a temporary location. So, the relative relationship is broken.
+    ENV['SIMP_CORE_PATH'] = local_simp_core_path
+  end
+
   #
-  # Default version and release to ensure we build *something*
-  default_simp_version = '5.1.X'
-  default_simp_release = 'X'
+  # Default simp-core git tag/branch to use to pull the simp.spec when
+  # a local simp.spec file does not exist.  This ensures we build *something*.
+  default_simp_branch = 'master'
+
+  # Default SIMP version should all other mechanisms to determine it fail
+  default_simp_version = '6.1.0-0'
   #
   # Default header to be written to release metadata file
   release_content = <<-EOM
@@ -37,54 +66,55 @@ EOM
   tmpspec = Tempfile.new('docspec')
 
   begin
-
     # Create the release metadata file
     FileUtils.mkdir_p('./build/rpm_metadata')
-    unless File.exist?(rel_file)
-      fh = File.open(rel_file,"w")
+    File.open(rel_file,"w") do |fh|
       fh.puts(release_content)
-      fh.close
     end
 
-    # If the default specfile does not exist, we need to check Github for a usable spec.
-    unless File.exist?(specfile)
-      warn("WARNING: No suitable spec file found at #{specfile}, defaulting to https://raw.githubusercontent.com/simp/simp-core/ENV['SIMP_VERSION']/src/build/simp.spec")
-      require 'open-uri'
-
-      simp_version = ENV['SIMP_VERSION']
-
-      unless simp_version
-        warn("WARNING: Found no ENV['SIMP_VERSION'] set, defaulting to #{default_simp_version}")
-        simp_version = default_simp_version
+    # If the SIMP_BRANCH set or default specfile does not exist,
+    # try to pull it from Github
+    # NOTE:  This code is a (more robust) duplicate of code in
+    # docs/conflib/get_simp_version.py.  Since that Python code is
+    # used to handle error cases in ReadTheDocs, it must NOT be removed.
+    simp_branch = ENV['SIMP_BRANCH']
+    if simp_branch or !File.exist?(specfile)
+      if simp_branch
+        spec_url = "https://raw.githubusercontent.com/simp/simp-core/#{simp_branch}/src/assets/simp/build/simp.spec"
+        puts "Using #{spec_url}"
+      else
+        spec_url = "https://raw.githubusercontent.com/simp/simp-core/#{default_simp_branch}/src/assets/simp/build/simp.spec"
+        warn("WARNING: No suitable spec file found at #{specfile}, defaulting to #{spec_url}")
       end
 
-      spec_url = "https://raw.githubusercontent.com/simp/simp-core/#{simp_version}/src/build/simp.spec"
+      require 'open-uri'
       begin
         open(spec_url) do |specfile|
           tmpspec.write(specfile.read)
         end
-      rescue Exception => e
+      rescue OpenURI::HTTPError => e
         $stderr.puts e.message
-        raise("Could not find a valid spec file at #{spec_url}, check your SIMP_VERSION environment setting!")
+        raise("Could not find a valid spec file at #{spec_url}, check your SIMP_BRANCH environment setting!")
       end
 
       specfile = tmpspec.path
     end
 
-    # Grab the version and release  out of whatever spec we have found.
-    begin
-      specinfo = Simp::RPM.get_info(specfile)
-      simp_version = specinfo[:version]
-      simp_release = specinfo[:release]
-    rescue Exception
-      warn("Could not obtain valid version/release information from #{specfile}, please check for consistency.  Defaulting to #{default_simp_version}-#{default_simp_release}")
-      simp_version = default_simp_version
-      simp_release = default_simp_release
+    # Grab the version and release out of whatever spec we have found.
+    rpm_metadata = OpenStruct.new
+    rpm_metadata.version, rpm_metadata.release  = default_simp_version.split('-')
+
+    if File.exist?(specfile)
+      begin
+        rpm_metadata = Simp::RPM.new(specfile)
+      rescue StandardError
+        warn("Could not obtain valid version/release information from #{specfile}, please check for consistency. Defaulting to: '#{default_simp_version}'")
+      end
     end
 
     # Set the version and release in the rel_file
-    %x(sed -i s/version:.*/version:#{simp_version}/ #{rel_file})
-    %x(sed -i s/release:.*/release:#{simp_release}/ #{rel_file})
+    %x(sed -i s/version:.*/version:#{rpm_metadata.version}/ #{rel_file})
+    %x(sed -i s/release:.*/release:#{rpm_metadata.release.split(rpm_metadata.dist).first}/ #{rel_file})
   ensure
     tmpspec.close
     tmpspec.unlink
@@ -93,45 +123,11 @@ end
 
 class DocPkg < Simp::Rake::Pkg
   # We need to inject the SCL Python repos for RHEL6 here if necessary
-  def mock_pre_check(chroot, *args)
-    mock_cmd = super(chroot, *args)
-
-    rh_version = %x(#{mock_cmd} -r #{chroot} -q --chroot 'cat /etc/redhat-release | cut -f3 -d" " | cut -f1 -d"."').chomp
-
-    # This is super fragile
-    if rh_version.to_i == 6
-      python_repo = 'rhscl-python27-epel-6-x86_64'
-
-      puts "NOTICE: You can ignore any errors relating to RPM commands that don't result in failure"
-      %x(#{mock_cmd} -q -r #{chroot} --chroot 'rpmdb --rebuilddb')
-      sh  %(#{mock_cmd} -q -r #{chroot} --chroot 'rpm --quiet -q yum') do |ok,res|
-        unless ok
-          %x(#{mock_cmd} -q -r #{chroot} --install yum)
-        end
-      end
-
-      sh %(#{mock_cmd} -q -r #{chroot} --chroot 'rpm --quiet -q #{python_repo}') do |ok,res|
-        unless ok
-          %x(#{mock_cmd} -q -r #{chroot} --install 'https://www.softwarecollections.org/en/scls/rhscl/python27/epel-6-x86_64/download/#{python_repo}.noarch.rpm')
-        end
-      end
-
-      sh %(#{mock_cmd} -q -r #{chroot} --chroot 'rpm --quiet -q python27') do |ok,res|
-        unless ok
-          # Fun Fact: Mock (sometimes) adds its default repos to /etc/yum/yum.conf and ignores anything in yum.repos.d
-          puts %x(#{mock_cmd} -q -r #{chroot} --chroot 'cat /etc/yum.repos.d/#{python_repo}.repo >> /etc/yum/yum.conf && yum install -qy python27')
-        end
-      end
-    end
-
-    mock_cmd
-  end
-
   def define_clean
     task :clean do
       find_erb_files.each do |erb|
         short_name = "#{File.dirname(erb)}/#{File.basename(erb,'.erb')}"
-        if File.exist?(short_name) then
+        if File.exist?(short_name)
           rm(short_name)
         end
       end
@@ -148,7 +144,7 @@ class DocPkg < Simp::Rake::Pkg
   def find_erb_files(dir=@base_dir)
     to_ret = []
     Find.find(dir) do |erb|
-      if erb =~ /\.erb$/ then
+      if erb =~ /\.erb$/
         to_ret << erb
       end
     end
@@ -174,7 +170,7 @@ DocPkg.new( File.dirname( __FILE__ ) ) do |t|
   end
 end
 
-def process_rpm_yaml(rel,simp_version)
+def process_rpm_yaml(rel, simp_version)
   fail("Must pass release to 'process_rpm_yaml'") unless rel
 
       header = <<-EOM
@@ -212,7 +208,60 @@ are required for system functionality and are specific to an installation on a
   fh.close
 end
 
+## Custom Linting Checks
+
+def lint_files_with_bad_tags
+  file_issues = Hash.new()
+
+  files_with_bad_tags = %x(grep -rne ':[[:alpha:]]\\+`[[:alpha:]]' docs).lines
+
+  files_with_bad_tags.each do |line|
+    line.strip!
+
+    line_parts = line.split(': ')
+
+    file_name = line_parts.shift
+    issue_text = line_parts.join(': ')
+
+    file_issues[file_name] = {
+      :issue_type => 'bad_tag',
+      :issue_text => issue_text
+    }
+  end
+
+  file_issues
+end
+
+# @param cmd document build command to execute
+# @param outfile the build output file to print to the console; may contain
+#   warnings
+def run_build_cmd(cmd, outfile=nil)
+  require 'open3'
+
+  puts "== #{cmd}"
+
+  stdout, stderr, status = Open3.capture3(cmd)
+
+  # This message is garbage
+  stderr.gsub!(/WARNING: The config value \S+ has type \S+, defaults to \S+\./,'')
+  stderr.strip!
+
+  unless status.success?
+    $stderr.puts( "== ERROR: `#{cmd}` returned '#{status.exitstatus}'",'STDERR:', '-'*80 , stderr, '-'*80 )
+    exit(1)
+  end
+
+  if outfile && File.exist?(outfile)
+    system("cat #{outfile}")
+  end
+
+  return status
+end
+
+## End Custom Linting Checks
+
 namespace :docs do
+  SPHINX_BUILD_OUTFILE = 'warnings.txt'
   namespace :rpm do
     desc 'Update the RPM lists'
     task :external do
@@ -322,44 +371,99 @@ which are simply available in the repository.
     end
   end
 
+  desc 'basic linting tasks'
+  task :lint do
+    file_issues = Hash.new()
+
+    puts "Starting doc linting"
+    puts "Checking for bad tags..."
+
+    file_issues.merge!(lint_files_with_bad_tags)
+
+    unless file_issues.empty?
+      msg = ["The following issues were found:"]
+
+      file_issues.keys.each do |file|
+        msg << "  * #{file}"
+        msg << "    * Issue Type: #{file_issues[file][:issue_type]}"
+        msg << "    * Issue Message: #{file_issues[file][:issue_text]}"
+        msg << ''
+      end
+
+      $stderr.puts(msg)
+      exit(1)
+    end
+
+    puts "Linting Complete"
+  end
+
   desc 'build HTML docs'
-  task :html do
-    extra_args = ''
-    ### TODO: decide how we want this task to work
-    ### version = File.open('build/simp-doc.spec','r').readlines.select{|x| x =~ /^%define simp_major_version/}.first.chomp.split(' ').last
-    ### extra_args = "-t simp_#{version}" if version
-    cmd = "sphinx-build -E -n #{extra_args} -b html -d sphinx_cache docs html"
-    puts "== #{cmd}"
-    %x(#{cmd} > /dev/null)
+  task :html => [:lint] do
+    extra_args = ENV.fetch('SIMP_DOC_extra_sphinx_args', '')
+    cmd = "sphinx-build -E -n #{extra_args} -b html -w #{SPHINX_BUILD_OUTFILE} -d sphinx_cache docs html"
+    run_build_cmd(cmd, SPHINX_BUILD_OUTFILE)
   end
 
   desc 'build HTML docs (single page)'
-  task :singlehtml do
-    extra_args = ''
-    cmd = "sphinx-build -E -n #{extra_args} -b singlehtml -d sphinx_cache docs html-single"
-    puts "== #{cmd}"
-    %x(#{cmd} > /dev/null)
+  task :singlehtml => [:lint] do
+    extra_args = ENV.fetch('SIMP_DOC_extra_sphinx_args', '')
+    cmd = "sphinx-build -E -n #{extra_args} -b singlehtml -w #{SPHINX_BUILD_OUTFILE} -d sphinx_cache docs html-single"
+    run_build_cmd(cmd, SPHINX_BUILD_OUTFILE)
   end
 
-  desc 'build PDF docs (SLOW)'
-  task :pdf do
-    extra_args = ''
-    cmd = "sphinx-build -T -E -n #{extra_args} -b pdf -d sphinx_cache docs pdf"
-    puts "== #{cmd}"
-    %x(#{cmd} > /dev/null)
+  desc 'build Sphinx PDF docs using the RTD resources (SLOWEST) TODO: BROKEN'
+  task :sphinxpdf => [:lint] do
+    extra_args = ENV.fetch('SIMP_DOC_extra_sphinx_args', '')
+    [ "sphinx-build -E -n #{extra_args} -b latex -D language=en -w #{SPHINX_BUILD_OUTFILE} -d sphinx_cache docs latex",
+      "pdflatex -interaction=nonstopmode -halt-on-error ./latex/*.tex"
+    ].each do |cmd|
+      run_build_cmd(cmd, SPHINX_BUILD_OUTFILE)
+    end
   end
 
+  desc 'build PDF docs (SLOWEST)'
+  task :pdf => [:lint] do
+    extra_args = ENV.fetch('SIMP_DOC_extra_sphinx_args', '')
+    cmd = "sphinx-build -E -n #{extra_args} -b pdf -w #{SPHINX_BUILD_OUTFILE} -d sphinx_cache docs pdf"
+    run_build_cmd(cmd)
+  end
 
-  desc 'run a local web server to view HTML docs on http://localhost:5000'
-  task :server, [:port] => [:html] do |_t, args|
+  desc 'Check for broken external links'
+  task :linkcheck => [:lint] do
+    extra_args = ENV.fetch('SIMP_DOC_extra_linkcheck_args', '')
+    cmd = "sphinx-build -E -n #{extra_args} -b linkcheck -w #{SPHINX_BUILD_OUTFILE} -d sphinx_cache docs linkcheck"
+    run_build_cmd(cmd, SPHINX_BUILD_OUTFILE)
+  end
+
+  desc <<-EOF
+    Run a local web server to view HTML docs on http://localhost:port'
+
+    ARGS:
+      * port => The port the local webserver will listen on (default: 5000)
+
+    NOTES:
+      * If `sphinx-autobuild` is available, it will be used to provide a
+        live-reload- capable web server that re-compiles and refreshes the
+        browser every time a file is edited.
+      * Otherwise, the docs will be auto-compiled using `rake docs:html` and
+        served using `ruby -run -e httpd`
+  EOF
+  task :server, [:port] do |_t, args|
     port = args.to_hash.fetch(:port, 5000)
-    puts "running web server on http://localhost:#{port}"
-    %x(ruby -run -e httpd html/ -p #{port})
+    require 'mkmf'
+    autobuild_cmd = find_executable 'sphinx-autobuild'
+    if autobuild_cmd && false
+      cmd = "SIMP_FAST_DOCS=true #{autobuild_cmd} -p #{port} -H 0.0.0.0 --poll --ignore docs/dynamic/\*.rst docs html"
+      run_build_cmd(cmd)
+    else
+      puts "running web server on http://localhost:#{port}"
+      Rake::Task['docs:html'].invoke
+      %x(ruby -run -e httpd html/ -p #{port})
+    end
   end
 end
 
 # We want to prep for build if possible, but not when running `rake -T`, etc...
 Rake.application.tasks.select{|task| task.name.start_with?('docs:', 'pkg:')}.each do |task|
-  task.enhance ['munge:prep'] do
-  end
+  task.enhance ['munge:prep']
 end
